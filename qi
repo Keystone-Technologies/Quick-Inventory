@@ -1,0 +1,109 @@
+#!/usr/bin/perl
+
+use 5.010;
+use strict;
+use warnings;
+#use diagnostics;
+
+use Data::Dumper;
+use IO::Prompt;
+use Config::General;
+use Getopt::Long;
+use Date::Manip;
+
+use Net::Google::Spreadsheets;
+use Net::Google::AuthSub;
+
+my $customer = '';
+GetOptions(
+	'customer|c=s' => \$customer,
+);
+die "Usage: $0 -c customer [options] [SS] [WS]\n" unless $customer;
+
+my $qifile;
+do { $qifile=$_ if -e $_; } foreach '/etc/qi.conf', "$ENV{HOME}/.qi", '.qi';
+my $qiconf = new Config::General($qifile);
+my %qiconf = $qiconf->getall;
+my @header = map { s/\W//g; lc($_) } split m!;!, $qiconf{header};
+
+my $auth = Net::Google::AuthSub->new();
+my $response = $auth->login($qiconf{user}, $qiconf{pass});
+die "Authentication Failure: " . $response->error unless $response->is_success;
+
+my $service = Net::Google::Spreadsheets->new(
+	username => $qiconf{user},
+	password => $qiconf{pass},
+);
+
+print "Opening SS ", $ARGV[0] || $qiconf{ss}, "\n";
+my $sheet = $service->spreadsheet({title => $ARGV[0] || $qiconf{ss}}) or die "$!\n";
+print "Opening SS ", $ARGV[1] || $qiconf{ws} || 'Sheet1', "\n";
+my $ws = $sheet->worksheet({title => $ARGV[1] || $qiconf{ws} || 'Sheet1'}) or die "$!\n";
+
+my %thisqi = (
+	'_input' => '',
+	'CUSTOMER' => $customer,
+	'DATERECEIVED' => UnixDate(ParseDate('now'), '%Y-%m-%d'),
+	'status' => '',
+	'customeruseonly' => '',
+	'assettag' => '',
+	'cogstonetag' => '',
+	'serialnumber' => '',
+	'assettype' => '',
+	'manufacturer' => '',
+	'model' => '',
+	'condition' => '',
+	'soldvia' => '',
+	'soldto' => '',
+	'datesold' => '',
+	'billed' => '',
+	'paid' => '',
+	'shipped' => '',
+	'saleprice' => '',
+	'relatedexpenses' => '',
+	'cogstone_percentage' => '',
+	'customer_percentage' => '',
+	'cogstone_revenue' => '',
+	'customer_revenue' => '',
+	'comments' => '',
+);
+my %lastqi = %thisqi;
+my $prompt = '';
+while ( 1 ) {
+	prompt "qi".($thisqi{cogstonetag}?" $thisqi{cogstonetag}":'').($thisqi{_input}?" $thisqi{_input}":'').($thisqi{$thisqi{_input}}?" $thisqi{$thisqi{_input}}":'')."> ";
+	last if /^(0|quit|save)$/;
+
+	if ( /^(\d{6}[AB]|save)$/ ) {
+		if ( $thisqi{cogstonetag} ) {
+			if ( $_ eq $thisqi{cogstonetag} ) {
+				print STDERR "Resetting input data for $_\n";
+				$thisqi{$_} = '' foreach grep { /^_?[a-z]+$/ } keys %thisqi;
+				$thisqi{cogstonetag} = $_ unless /^save$/;
+			} else {
+				if ( $thisqi{assettag} ) {
+					print "Updating SS\n";
+					$ws->add_row({map { lc($_) => $thisqi{$_} } grep { /^[A-Za-z]/ } keys %thisqi}) if 1;
+					%lastqi = %thisqi;
+					$thisqi{$_} = '' foreach grep { /^_?[a-z]+$/ } keys %thisqi;
+					$thisqi{cogstonetag} = $_ unless /^save$/;
+				} elsif ( $thisqi{_input} ) {	# && any of /^[a-z]/ ne ''
+					print STDERR "Minimum client asset tag field missing.\n";
+				} else {
+					$thisqi{cogstonetag} = $_ unless /^save$/;
+				}
+			}
+		} else {
+			$thisqi{cogstonetag} = $_ unless /^save$/;
+		}
+	} elsif ( /^QI(\w+)$/ && $thisqi{cogstonetag} ) {
+		if ( grep { $_ eq lc($1) } @header ) {
+			$thisqi{_input} = lc($1);
+		} else {
+			print STDERR "Unrecognized field $1\n";
+		}
+	} elsif ( /^.*$/ && $thisqi{cogstonetag} && $thisqi{_input} ) {
+		$thisqi{$thisqi{_input}} = $_;
+	} else {
+		print STDERR "Unrecognized input $_.\n";
+	}
+}
