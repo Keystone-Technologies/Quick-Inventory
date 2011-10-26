@@ -2,7 +2,7 @@
 
 use 5.010;
 use strict;
-use warnings;
+#use warnings;
 #use diagnostics;
 
 use Data::Dumper;
@@ -26,10 +26,8 @@ my $qifile;
 do { $qifile=$_ if -e $_; } foreach '/etc/qi.conf', "$ENV{HOME}/.qi", '.qi';
 my $qiconf = new Config::General($qifile);
 my %qiconf = $qiconf->getall;
-my %thisqi = map { s/\W//g; lc($_) => '' } split m!;!, $qiconf{header};
-$thisqi{_input} = '';
-my %lastqi = %thisqi;
-my %pastqi = %thisqi;
+my %qi = map { s/\W//g; lc($_) => '' } split m!;!, $qiconf{header};
+my $qi = {};
 
 my $auth = Net::Google::AuthSub->new();
 my $response = $auth->login($qiconf{user}, $qiconf{pass});
@@ -45,60 +43,60 @@ my $sheet = $service->spreadsheet({title => $ARGV[0] || $qiconf{ss}}) or die "$!
 print "Opening SS ", $ARGV[1] || $qiconf{ws} || 'Sheet1', "\n";
 my $ws = $sheet->worksheet({title => $ARGV[1] || $qiconf{ws} || 'Sheet1'}) or die "$!\n";
 
-my $prompt = '';
+my ($THIS, $NEXT);
 while ( 1 ) {
-	prompt "qi".($thisqi{cogstonetag}?" $thisqi{cogstonetag}":'').($thisqi{_input}?" $thisqi{_input}":'').($thisqi{$thisqi{_input}}?" $thisqi{$thisqi{_input}}":'')."> ";
-	last if /^(0|quit|save)$/;
+	prompt "qi".($qi->{$THIS}->{cogstonetag}?" $qi->{$THIS}->{cogstonetag}":'').($qi->{$THIS}->{_input}?" $qi->{$THIS}->{_input}":'').($qi->{$THIS}->{$qi->{$THIS}->{_input}}?" $qi->{$THIS}->{$qi->{$THIS}->{_input}}":'')."> ";
+	last if /^(0|quit|exit)$/;
 
-	if ( /^(\d{6}[AB]|save)$/ ) {
-		my $row = $ws->row({sq => "cogstonetag = \"$_\""}) unless /^save$/;
-		if ( $row ) {
+	if ( /^(\d{6}[AB])$/ ) {
+		$NEXT = $_;
+		%{$qi->{$NEXT}} = %qi unless exists $qi->{$NEXT} && $NEXT ne $THIS;
+		do { $qi->{$NEXT}->{$_} ||= $set{$_} eq 'now' ? UnixDate(ParseDate('now'), '%m/%d/%Y') : $set{$_}; } foreach keys %set;
+		if ( my $row = $ws->row({sq => "cogstonetag = \"$NEXT\""}) ) {
 			my $content = $row->content;
-			$pastqi{$content->{cogstonetag}}{$_}=$content->{$_} foreach grep { $content->{$_} } keys %{$content};
+			$qi->{$NEXT}->{$_} = $content->{$_} foreach grep { $content->{$_} } keys %{$content};
+		} else {
+			$qi->{$NEXT}->{cogstonetag} = $NEXT;
 		}
-		if ( $thisqi{cogstonetag} ) {
-			if ( $_ eq $thisqi{cogstonetag} ) {
-				print STDERR "Resetting input data for $_\n";
-				$thisqi{$_} = '' foreach grep { /^_?[a-z]+$/ } keys %thisqi;
-				$thisqi{cogstonetag} = $_ unless /^save$/;
-				do { $thisqi{$_} = $set{$_} eq 'now' ? UnixDate(ParseDate('now'), '%Y-%m-%d') : $set{$_}; } foreach keys %set;
-			} else {
-				if ( $thisqi{assettag} ) {
+
+		if ( $qi->{$THIS}->{cogstonetag} ) {
+			if ( $qi->{$THIS}->{assettag} ) {
+				if ( $qi->{$THIS}->{_update} ) {
 					print "Updating SS\n";
-					if ( exists $pastqi{$thisqi{cogstonetag}} ) {
-						my $row = $ws->row({sq => "cogstonetag = \"$thisqi{cogstonetag}\""});
-						$row->content({map { lc($_) => $thisqi{$_} } grep { /^[A-Za-z]/ && !/^cogstonetag$/ && $thisqi{$_} } keys %thisqi});
+					if ( my $row = $ws->row({sq => "cogstonetag = \"$qi->{$THIS}->{cogstonetag}\""}) ) {
+						$row->content({map { lc($_) => $qi->{$THIS}->{$_} } grep { /^[A-Za-z]/ && $qi->{$THIS}->{$_} } keys %{$qi->{$THIS}}});
 					} else {
-						$ws->add_row({map { lc($_) => $thisqi{$_} } grep { /^[A-Za-z]/ } keys %thisqi});
+						$ws->add_row({map { lc($_) => $qi->{$THIS}->{$_} } grep { /^[A-Za-z]/ } keys %{$qi->{$THIS}}});
 					}
-					%lastqi = %thisqi;
-					$thisqi{$_} = '' foreach grep { /^_?[a-z]+$/ } keys %thisqi;
-					$thisqi{cogstonetag} = $_ unless /^save$/;
-					do { $thisqi{$_} = $set{$_} eq 'now' ? UnixDate(ParseDate('now'), '%Y-%m-%d') : $set{$_}; } foreach keys %set;
-					$thisqi{$_}=$pastqi{$thisqi{cogstonetag}}{$_} foreach grep { $pastqi{$thisqi{cogstonetag}}{$_} } keys %{$pastqi{$thisqi{cogstonetag}}};
-				} elsif ( $thisqi{_input} ) {	# && any of /^[a-z]/ ne ''
-					print STDERR "Minimum client asset tag field missing.\n";
-				} else {
-					$thisqi{cogstonetag} = $_ unless /^save$/;
-					do { $thisqi{$_} = $set{$_} eq 'now' ? UnixDate(ParseDate('now'), '%Y-%m-%d') : $set{$_}; } foreach keys %set;
-					$thisqi{$_}=$pastqi{$thisqi{cogstonetag}}{$_} foreach grep { $pastqi{$thisqi{cogstonetag}}{$_} } keys %{$pastqi{$thisqi{cogstonetag}}};
+					$qi->{$THIS}->{_update} = 0;
 				}
+				$THIS = $NEXT;
+			} elsif ( $qi->{$THIS}->{_input} ) {	# && any of /^[a-z]/ ne ''
+				print STDERR "Minimum client asset tag field missing.\n";
+			} else {
+				$THIS = $NEXT;
 			}
 		} else {
-			$thisqi{cogstonetag} = $_ unless /^save$/;
-			do { $thisqi{$_} = $set{$_} eq 'now' ? UnixDate(ParseDate('now'), '%Y-%m-%d') : $set{$_}; } foreach keys %set;
-			$thisqi{$_}=$pastqi{$thisqi{cogstonetag}}{$_} foreach grep { $pastqi{$thisqi{cogstonetag}}{$_} } keys %{$pastqi{$thisqi{cogstonetag}}};
+			$THIS = $NEXT;
 		}
-	} elsif ( /^QIV_(\w+)$/ ) {
-		print STDERR "$1 = $thisqi{$1}\n";
-	} elsif ( /^QI_(\w+)$/ && $thisqi{cogstonetag} ) {
-		if ( grep { $_ eq lc($1) } keys %thisqi ) {
-			$thisqi{_input} = lc($1);
+	} elsif ( /^QIV_([\*\w]+)$/ ) {
+		print STDERR "$_ = $qi->{$THIS}->{$_}\n" foreach grep { $1 eq '*' || $1 eq $_ } sort keys %{$qi->{$THIS}};
+	} elsif ( /^QI_(\w+):(\w+)$/ && $qi->{$THIS}->{cogstonetag} ) {
+		if ( grep { $_ eq lc($1) } keys %qi ) {
+			$qi->{$THIS}->{_input} = lc($1);
+			$qi->{$THIS}->{$1} = $2;
 		} else {
 			print STDERR "Unrecognized field $1\n";
 		}
-	} elsif ( /^.*$/ && $thisqi{cogstonetag} && $thisqi{_input} ) {
-		$thisqi{$thisqi{_input}} = $_;
+	} elsif ( /^QI_(\w+)$/ && $qi->{$THIS}->{cogstonetag} ) {
+		if ( grep { $_ eq lc($1) } keys %qi ) {
+			$qi->{$THIS}->{_input} = lc($1);
+		} else {
+			print STDERR "Unrecognized field $1\n";
+		}
+	} elsif ( $qi->{$THIS}->{cogstonetag} && $qi->{$THIS}->{_input} ) {
+		$qi->{$THIS}->{_update} = 1;
+		$qi->{$THIS}->{$qi->{$THIS}->{_input}} = $_;
 	} else {
 		print STDERR "Unrecognized input $_.\n";
 	}
