@@ -13,7 +13,11 @@ QI::Schema::Result::Status
 use strict;
 use warnings;
 
-use base 'DBIx::Class::Core';
+=head1 BASE CLASS: L<QI::Schema::Result>
+
+=cut
+
+use base 'QI::Schema::Result';
 
 =head1 TABLE: C<status>
 
@@ -57,9 +61,14 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("status_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 16:39:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dzuJW3RdWP5LQTlBFhO7Yw
+# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 20:41:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wC42tCZm7N3frnt0gul5Vw
 
+__PACKAGE__->has_many(assets => 'QI::Schema::Result::Asset', 'status_id');
+
+use overload '""' => sub {shift->name}, fallback => 1;
+
+sub id { shift->status_id }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

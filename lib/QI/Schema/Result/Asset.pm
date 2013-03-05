@@ -13,7 +13,11 @@ QI::Schema::Result::Asset
 use strict;
 use warnings;
 
-use base 'DBIx::Class::Core';
+=head1 BASE CLASS: L<QI::Schema::Result>
+
+=cut
+
+use base 'QI::Schema::Result';
 
 =head1 TABLE: C<assets>
 
@@ -278,9 +282,17 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("tag");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 16:39:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:i60xW33WSCd6UNErIWtksA
+# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 20:41:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4RvwtVZa13nQ7/7Ijt6b5w
 
+__PACKAGE__->belongs_to(customer => 'QI::Schema::Result::Customer', 'customer_id', {join_type=>'left'});
+__PACKAGE__->belongs_to(asset_type => 'QI::Schema::Result::AssetType', 'asset_type_id', {join_type=>'left'});
+__PACKAGE__->belongs_to(cond => 'QI::Schema::Result::Cond', 'cond_id', {join_type=>'left'});
+__PACKAGE__->belongs_to(buyer => 'QI::Schema::Result::Buyer', 'buyer_id', {join_type=>'left'});
+__PACKAGE__->belongs_to(location => 'QI::Schema::Result::Location', 'location_id', {join_type=>'left'});
+__PACKAGE__->belongs_to(sold_via => 'QI::Schema::Result::SoldVia', 'sold_via_id', {join_type=>'left'});
+__PACKAGE__->belongs_to(status => 'QI::Schema::Result::Status', 'status_id', {join_type=>'left'});
+sub id { shift->tag }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

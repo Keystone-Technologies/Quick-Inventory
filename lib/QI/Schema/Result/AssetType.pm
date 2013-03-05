@@ -13,7 +13,11 @@ QI::Schema::Result::AssetType
 use strict;
 use warnings;
 
-use base 'DBIx::Class::Core';
+=head1 BASE CLASS: L<QI::Schema::Result>
+
+=cut
+
+use base 'QI::Schema::Result';
 
 =head1 TABLE: C<asset_types>
 
@@ -57,9 +61,13 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("asset_type_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 16:39:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CwkWS3EZJX+BdQ5eVtlQ0g
+# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 20:41:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qsyWGznA5WhEyjAeleSv2g
 
+__PACKAGE__->has_many(assets => 'QI::Schema::Result::Asset', 'asset_type_id');
+__PACKAGE__->has_many(inventory => 'QI::Schema::Result::Inventory', 'asset_type_id');
+
+sub id { shift->asset_type_id }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

@@ -7,6 +7,6 @@ sub _search {
 	$rs;
 }
 
-sub TO_VIEW { qw/tag manufacturer product model customer.id customer.name/ }
+sub FROM_JSON { qw/tag manufacturer product model customer.id customer.name/ }
 
 1;

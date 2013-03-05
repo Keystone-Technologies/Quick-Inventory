@@ -13,4 +13,5 @@ dbicdump \
 	-o dump_directory=. \
 	-o default_resultset_class=ResultSet \
 	-o preserve_case=1 \
+	-o result_base_class='QI::Schema::Result' \
 	QI::Schema dbi:mysql:database=${1:-$db} ${2:-$db} ${3:-$db} '{ quote_char => "`" }'

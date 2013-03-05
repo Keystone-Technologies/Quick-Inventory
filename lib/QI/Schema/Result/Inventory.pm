@@ -13,7 +13,11 @@ QI::Schema::Result::Inventory
 use strict;
 use warnings;
 
-use base 'DBIx::Class::Core';
+=head1 BASE CLASS: L<QI::Schema::Result>
+
+=cut
+
+use base 'QI::Schema::Result';
 
 =head1 TABLE: C<inventory>
 
@@ -132,9 +136,13 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("tag");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 16:39:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:T779AWmAVMylGs8kKrGCmQ
+# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 20:41:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TaYicyl3rqZfNmYYY/3JHQ
 
+__PACKAGE__->belongs_to(asset_type => 'QI::Schema::Result::AssetType', 'asset_type_id', {join_type=>'left'});
+__PACKAGE__->belongs_to(location => 'QI::Schema::Result::Location', 'location_id', {join_type=>'left'});
+
+use overload '""' => sub {shift->tag}, fallback => 1;
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

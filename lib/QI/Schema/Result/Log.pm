@@ -13,7 +13,11 @@ QI::Schema::Result::Log
 use strict;
 use warnings;
 
-use base 'DBIx::Class::Core';
+=head1 BASE CLASS: L<QI::Schema::Result>
+
+=cut
+
+use base 'QI::Schema::Result';
 
 =head1 TABLE: C<log>
 
@@ -103,8 +107,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 16:39:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:i3/XqI8ky5WQ7oIyX39Niw
+# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 20:41:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+KjZCr60R30NNO4fWrBmBA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

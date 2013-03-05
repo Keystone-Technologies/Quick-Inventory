@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use QI::Schema;
+
+use Data::Dumper;
+use Mojo::JSON;
+
+my $schema = QI::Schema->connect('DBI:mysql:database=qi_dev;host=localhost', 'qi', 'qi');
+print Mojo::JSON->new->encode($schema->resultset("Asset")->search({tag=>'001233A'}, {result_class=>'QI::Schema::Result::Assets'})->first);

@@ -2,8 +2,10 @@
 % content grid => begin
 $("#list1").jqGrid({
     caption: "Quick Assets",
+    sortname: "tag",
     colModel:[
         {name:'tag',label:'Cogstone Tag',width:100,editable:false},
+        {name:'customer.name',label:'Customer',width:200,editable:true},
         {name:'manufacturer',label:'Manufacturer',width:200,editable:true},
         {name:'product',label:'Product',width:200,editable:true},
         {name:'model',label:'Model',width:200,editable:true},

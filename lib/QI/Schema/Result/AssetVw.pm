@@ -13,7 +13,11 @@ QI::Schema::Result::AssetVw - VIEW
 use strict;
 use warnings;
 
-use base 'DBIx::Class::Core';
+=head1 BASE CLASS: L<QI::Schema::Result>
+
+=cut
+
+use base 'QI::Schema::Result';
 
 =head1 TABLE: C<asset_vw>
 
@@ -94,8 +98,8 @@ __PACKAGE__->add_columns(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 16:39:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DvFYP0rhAz7t7VUI/nFzgw
+# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 20:41:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UBu2LYEepCeOvWiiG2uLMA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

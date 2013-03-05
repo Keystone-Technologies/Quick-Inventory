@@ -5,7 +5,7 @@ sub create {
 	my $self = shift;
 	my $rs = $self->jqgrid(create => $self->db->resultset($self->param('results')));
 	$self->respond_to(
-		json => {json => [$rs->all]},
+		json => {json => $rs->all},
 	);
 }
 
