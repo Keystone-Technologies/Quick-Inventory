@@ -1,0 +1,49 @@
+% extends '/layouts/grid', title=>'Amdocs Assets';
+% content grid => begin
+<%== autocomplete 'ac_customer', [qw/name _value category/] %>
+<%== autocomplete 'ac_asset_type', [qw/name _value category/] %>
+$("#list1").jqGrid({
+    caption: "Amdocs Assets",
+    sortname: "tag",
+    colModel:[
+        {name:'tag',label:'Cogstone Tag',width:100,editable:false},
+        {name:'parenttag',label:'Parent Tag',width:100,editable:false},
+        {name:'customer.nameid',label:'Customer',width:200,editable:true,editoptions:{size:50,dataInit:ac_customer},editrules:{edithidden:true,required:false,custom:true,custom_func:hasFK},formatter:'hideFK'},
+        {name:'received',label:'Received',width:200,editable:true},
+        {name:'customer_tag',label:'Customer Tag',width:200,editable:true},
+        {name:'serial_number',label:'Serial Number',width:200,editable:true},
+        {name:'asset_type.nameid',label:'Asset Type',width:200,editable:true,editoptions:{size:50,dataInit:ac_asset_type},editrules:{edithidden:true,required:false,custom:true,custom_func:hasFK},formatter:'hideFK'},
+        {name:'manufacturer',label:'Manufacturer',width:200,editable:true},
+        {name:'product',label:'Product',width:200,editable:true},
+        {name:'model',label:'Model',width:200,editable:true},
+        {name:'cond',label:'Condition',width:200,editable:true},
+        {name:'sold',label:'Sold',width:200,editable:true,edittype:'select',editoptions:{multiple:false,value:'1:Yes;0:No'},formatter:'bool'},
+        {name:'price',label:'Price',width:200,editable:true,editrules:{required:true,number:true,minValue:0},formoptions:{elmsuffix:'(*)'},formatter:'currency',formatoptions:{decimalSeparator:".", thousandsSeparator: ",", decimalPlaces: 0, prefix: "$"}},
+        {name:'change_stamp',label:'Change Stamp',width:200,editable:true}
+    ]
+}).navGrid('#pager1',
+    {edit:true,add:true,del:true},
+    // {edit}, {add}, {del}, {search}, {view}
+    {
+        url: "<%= url_for 'update_assets' %>",
+        editCaption: "Edit Asset"
+    },
+    {
+        url: "<%= url_for 'create_assets' %>",
+        addCaption: "Add Asset"
+    },
+    {
+        url: "<%= url_for 'delete_assets' %>",
+        caption: "Delete Rotarian",
+        msg: "Deleted selected Asset(s)?"
+    },
+    {
+        url: "<%= url_for 'search_assets' %>",
+        caption: "Search Assets"
+    },
+    {
+        url: "<%= url_for 'view_assets' %>",
+        caption: "View Asset"
+    }
+);
+% end

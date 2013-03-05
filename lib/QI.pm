@@ -31,6 +31,9 @@ sub setup_routing {
 	$r->get('/')->to('index#qi');
 
 	$r->jqgrid([Assets => 'Asset']);
+
+	my $clients = $r->under('/clients');
+	$clients->jqgrid([Amdocs => 'Asset']);
 }
 
 1;
