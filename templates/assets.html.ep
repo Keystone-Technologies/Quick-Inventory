@@ -1,0 +1,36 @@
+% extends '/layouts/grid', title=>'Assets';
+% content grid => begin
+$("#list1").jqGrid({
+    caption: "Quick Assets",
+    colModel:[
+        {name:'tag',label:'Cogstone Tag',width:100,editable:false},
+        {name:'manufacturer',label:'Manufacturer',width:200,editable:true},
+        {name:'product',label:'Product',width:200,editable:true},
+        {name:'model',label:'Model',width:200,editable:true},
+    ]
+}).navGrid('#pager1',
+    {edit:true,add:true,del:true},
+    // {edit}, {add}, {del}, {search}, {view}
+    {
+        url: "<%= url_for 'update_assets' %>",
+        editCaption: "Edit Asset"
+    },
+    {
+        url: "<%= url_for 'create_assets' %>",
+        addCaption: "Add Asset"
+    },
+    {
+        url: "<%= url_for 'delete_assets' %>",
+        caption: "Delete Rotarian",
+        msg: "Deleted selected Asset(s)?"
+    },
+    {
+        url: "<%= url_for 'search_assets' %>",
+        caption: "Search Assets"
+    },
+    {
+        url: "<%= url_for 'view_assets' %>",
+        caption: "View Asset"
+    }
+);
+% end

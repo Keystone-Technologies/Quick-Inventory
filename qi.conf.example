@@ -1,0 +1,8 @@
+{
+	database => {
+		name => 'name',
+		host => 'host',
+		user => 'user',
+		pass => 'pass',
+	},
+}
