@@ -142,7 +142,7 @@ sub search {
 		return @order_by ? (order_by => [@order_by]) : ();
 	};
 
-	$rs = $rs->search({}, {join => $relationships}) if defined $relationships;
+	$rs = $rs->search({}, {prefetch => $relationships}) if defined $relationships;
 	$rs = $rs->search({$search->($request->{searchField}, $request->{searchOper}, $request->{searchString})});
 	$rs = $rs->search({$filters->($request->{filters})});
 	$rs = $rs->search({}, {$order_by->($request->{sidx}, $request->{sord})});
