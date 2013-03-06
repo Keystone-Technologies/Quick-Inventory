@@ -7,12 +7,12 @@ $("#list1").jqGrid({
     sortname: "received",
     sortorder: "desc",
     colModel:[
-        {key:true,name:'tag',label:'Cogstone Tag',width:100,editable:false},
+        {key:true,name:'tag',label:'Cogstone Tag',width:130,editable:false},
         {name:'parenttag',label:'Parent Tag',width:100,editable:false},
-        {name:'customer.nameid',label:'Customer',width:200,editable:false,editoptions:{size:50,dataInit:ac_customer},editrules:{edithidden:true,required:false,custom:true,custom_func:hasFK},formatter:'hideFK'},
-        {name:'received',label:'Received',width:200,editable:false},
+        //{name:'customer.nameid',label:'Customer',width:200,editable:false,editoptions:{size:50,dataInit:ac_customer},editrules:{edithidden:true,required:false,custom:true,custom_func:hasFK},formatter:'hideFK'},
+        {name:'received',label:'Received',width:120,editable:false},
         {name:'customer_tag',label:'Customer Tag',width:200,editable:false},
-        {name:'customer_retired',label:'Retired?',width:200,editable:true,edittype:'select',editoptions:{multiple:false,value:'1:Yes;0:No'},formatter:'bool'},
+        {name:'customer_retired',label:'Retired?',width:200,editable:true,edittype:'checkbox',editoptions:{value:"1:0"},formatter:'bool'},
         {name:'serial_number',label:'Serial Number',width:200,editable:false},
         {name:'asset_type.nameid',label:'Asset Type',width:200,editable:false,editoptions:{size:50,dataInit:ac_asset_type},editrules:{edithidden:true,required:false,custom:true,custom_func:hasFK},formatter:'hideFK'},
         {name:'manufacturer',label:'Manufacturer',width:200,editable:false},
@@ -24,21 +24,11 @@ $("#list1").jqGrid({
         {name:'change_stamp',label:'Change Stamp',width:200,editable:false}
     ]
 }).navGrid('#pager1',
-    {edit:true,add:true,del:true},
+    {edit:false,add:false,del:false},
     // {edit}, {add}, {del}, {search}, {view}
-    {
-        url: "<%= url_for 'update_assets' %>",
-        editCaption: "Edit Asset"
-    },
-    {
-        url: "<%= url_for 'create_assets' %>",
-        addCaption: "Add Asset"
-    },
-    {
-        url: "<%= url_for 'delete_assets' %>",
-        caption: "Delete Rotarian",
-        msg: "Deleted selected Asset(s)?"
-    },
+    {},
+    {},
+    {},
     {
         url: "<%= url_for 'search_assets' %>",
         caption: "Search Assets"

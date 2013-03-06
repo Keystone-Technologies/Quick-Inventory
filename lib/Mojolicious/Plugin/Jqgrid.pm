@@ -6,6 +6,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 our $VERSION = '0.01';
 
 use Mojo::Util qw(decamelize);
+use Mojo::Exception;
 
 use Data::Dumper;
 
@@ -42,6 +43,13 @@ sub insert {
 	my $self = shift;
 	my ($c, $rs) = @_;
 	my $request = ref $c->merged ? $c->merged : {$c->merged};
+	my ($relationships, $edit, $validate);
+	{
+		no strict;
+		$relationships = ${($rs->result_class).'::relationships'};
+		$edit = ${($rs->result_class).'::edit'};
+		$validate = ${($rs->result_class).'::validate'};
+	}
 
 	return {} unless $request->{oper} eq 'add';
 
@@ -49,18 +57,24 @@ sub insert {
 
 	warn "Inserting new record\n" if $ENV{JQGRID_DEBUG};
 	warn Dumper({insert=>$data}) if $ENV{JQGRID_DEBUG};
-	my $insert = $rs->new_result({});
-	$insert->$_($data->{$_}) for keys %$data;
-	return $insert->insert;
-
-	my $id = $insert->insert->id;
-	return {res=>($id?'ok':'err'), msg=>($id?'ok':'err'), id=>$id};
+	my @failed_input = map { $_ => $validate->{$_}->[1] } grep { defined $validate->{$_} && $data->{$_} !~ $validate->{$_}->[0] } keys %$data;
+	return Mojo::Exception->throw([@failed_input]) if @failed_input;
+	$rs = $rs->new_result({});
+	$rs->$_($data->{$_}) for keys %$data;
+	$rs = ($rs->result_class)->_insert($rs, $request) if ($rs->result_class)->can('_insert');
+	return ref $rs ? $rs->insert : $rs;
 }
 
 sub search {
 	my $self = shift;
 	my ($c, $rs) = @_;
 	my $request = ref $c->merged ? $c->merged : {$c->merged};
+	my ($relationships, $read);
+	{
+		no strict;
+		$relationships = ${($rs->result_class).'::relationships'};
+		$read = ${($rs->result_class).'::read'};
+	}
 
 	my %op = (
 		'eq' => { pre => '',  post => '',  op => '=', },            # equal
@@ -81,8 +95,6 @@ sub search {
 		'nn' => { pre => '',  post => '',  op => {'!=' => undef}, },
 	);
 
-	my @prefetch = ();
-
 	my $filters = sub {
 		my ($filters) = @_;
 		$filters ? (%{_complex_search($filters)}) : ();
@@ -91,40 +103,51 @@ sub search {
 	my $search = sub {
 		my ($field, $op, $string) = @_;
 		return () unless $field && $op && defined $string;
-		# Need a callback here to reference ResultView::Result::
-		my $cb = '_search_'.$field;
-		#if ( $result_class->can($cb) ) {
-		#	$field = $result_class->$cb($self, $request);
-		#} else {
-			push @prefetch, ((split /\./, $field)[0]) if $field =~ /\./;
-		#}
-		return $self->_me($rs, $field) => (ref $op{$op}{op} ? $op{$op}{op} : {$op{$op}{op} => $op{$op}{pre}.$string.$op{$op}{post}});
+		$op{$op}{string} = $string;
+		my $_field = $read->{$field} if $read && defined $read->{$field};
+		$field = ref $_field eq 'ARRAY' && defined $_field->[0] ? $_field->[0] : ref $_field eq 'SCALAR' || ! ref $_field ? $_field || $field : $field;
+		if ( ref $field eq 'SCALAR' ) {
+			$field = $$field;
+		} elsif ( !ref $field ) {
+			$field = $self->_me($rs, $field);
+		} elsif ( ref $field eq 'CODE' ) {
+			return $field->($op{$op});
+		} else {
+			return ();
+		}
+		return $field => {$op{$op}{op} => ref $op{$op}{op} ? $op{$op}{op} : $op{$op}{pre}.$op{$op}{string}.$op{$op}{post}};
 	};
 
 	my $order_by = sub {
 		my ($sidx, $sord) = @_;
 		return () unless $sidx;
 		my @sidx = split /,/, $sidx;
-		my @sord = split /,/, ($sord||'asc');
+		my @sord = split /,/, $sord;
 
 		my @order_by = ();
 		foreach ( 0..$#sidx ) {
-			my ($sidx, $sord) = ($sidx[$_], $sord[$_]);
-			# Need a callback here to reference ResultView::Result::
-			my $cb = '_order_by_'.$sidx;
-			#$sidx = $result_class->$cb($self, $request) if $result_class->can($cb);
-			push @prefetch, ((split /\./, $sidx)[0]) if $sidx =~ /\./;
-			push @order_by, {"-$sord" => $self->_me($rs, $sidx)};
+			my ($sidx, $sord) = ($sidx[$_], $sord[$_]||'asc');
+			my $_sidx = $read->{$sidx} if $read && defined $read->{$sidx};
+			$sidx = ref $_sidx eq 'ARRAY' && defined $_sidx->[1] ? $_sidx->[1] : ref $_sidx eq 'SCALAR' || ! ref $_sidx ? $_sidx || $sidx : $sidx;
+			if ( ref $sidx eq 'SCALAR' ) {
+				$sidx = $$sidx;
+			} elsif ( !ref $sidx ) {
+				$sidx = $self->_me($rs, $sidx);
+			} else {
+				next;
+			}
+			push @order_by, {"-$sord" => $sidx->()} and next if ref $sidx eq 'CODE';
+			push @order_by, {"-$sord" => $sidx};
 		}
 		return @order_by ? (order_by => [@order_by]) : ();
 	};
 
-	$rs = ($rs->result_class)->_search($rs, $request) if ($rs->result_class)->can('_search');
-	$rs = $rs->search({}, {prefetch => [@prefetch]}) if @prefetch;
+	$rs = $rs->search({}, {join => $relationships}) if defined $relationships;
 	$rs = $rs->search({$search->($request->{searchField}, $request->{searchOper}, $request->{searchString})});
 	$rs = $rs->search({$filters->($request->{filters})});
-	$rs = $rs->search({}, {page => ($request->{page}||1), (defined $request->{rows} ? (rows => $request->{rows}) : ())});
 	$rs = $rs->search({}, {$order_by->($request->{sidx}, $request->{sord})});
+	$rs = $rs->search({}, {page => ($request->{page}||1), (defined $request->{rows} ? (rows => $request->{rows}) : ())});
+	$rs = ($rs->result_class)->_search($rs, $request) if ($rs->result_class)->can('_search');
 	return $rs;
 }
 
@@ -132,6 +155,13 @@ sub update {
 	my $self = shift;
 	my ($c, $rs) = @_;
 	my $request = ref $c->merged ? $c->merged : {$c->merged};
+	my ($relationships, $edit, $validate);
+	{
+		no strict;
+		$relationships = ${($rs->result_class).'::relationships'};
+		$edit = ${($rs->result_class).'::edit'};
+		$validate = ${($rs->result_class).'::validate'};
+	}
 
 	return {} unless $request->{oper} eq 'edit';
 
@@ -146,27 +176,34 @@ sub update {
 		$data = $self->_process_fields($rs, $request->{id} => {%$request});
 	}
 	warn Dumper([update=>$request->{id}=>$data]) if $ENV{JQGRID_DEBUG};
-	my $record = $rs->find($request->{id}) or return undef;
-	$record->$_($data->{$_}) for keys %$data;
-	return $record->update;
+	my @failed_input = map { $_ => $validate->{$_}->[1] } grep { defined $validate->{$_} && $data->{$_} !~ $validate->{$_}->[0] } keys %$data;
+	return Mojo::Exception->throw([@failed_input]) if @failed_input;
+	$rs = $rs->find($request->{id}) or return undef;
+	$rs->$_($data->{$_}) for keys %$data;
+	$rs = ($rs->result_class)->_update($rs, $request) if ($rs->result_class)->can('_update');
+	return ref $rs ? $rs->update : $rs;
 }
 
 sub delete {
 	my $self = shift;
 	my ($c, $rs) = @_;
 	my $request = ref $c->merged ? $c->merged : {$c->merged};
+	my ($relationships);
+	{
+		no strict;
+		$relationships = ${($rs->result_class).'::relationships'};
+	}
 
 	return {} unless $request->{oper} eq 'del';
 
 	my @err;
 	foreach ( split /,/, $request->{id} ) {
 		warn "Deleting $_\n" if $ENV{JQGRID_DEBUG};
-		my $delete = $rs->find($_) or next;
-		push @err, $delete->delete;
+		my $_rs = $rs->find($_) or next;
+		$_rs = ($rs->result_class)->_update($_rs, $request) if ($rs->result_class)->can('_delete');
+		push @err, ref $_rs ? $_rs->delete : $_rs;
 	}
 	return wantarray ? @err : scalar @err;
-
-	return {res=>(!@err?'ok':'err'),msg=>''};
 }
 
 sub _me {
