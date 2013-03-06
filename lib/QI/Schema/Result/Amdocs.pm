@@ -10,10 +10,10 @@ sub received { shift->SUPER::received->ymd }
 sub sold { shift->SUPER::sold ? 1 : 0 }
 
 # These class methods are passed $rs, $request
-sub _create { shift };
-sub _search { shift; shift->search({'customer.name'=>'Amdocs'}) };
-sub _update { shift };
-sub _delete { shift };
+sub _create { $_[1] };
+sub _search { $_[1]->search({'customer.name'=>'Amdocs'}) };
+sub _update { $_[1] };
+sub _delete { $_[1] };
 
 # The relationships associated with this result (table)
 our $relationships = [qw/customer asset_type/];
