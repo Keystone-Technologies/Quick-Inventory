@@ -3,3 +3,7 @@ DEADJOE
 *.conf.sh
 my.cnf
 log/*
+.gitignore
+qi.conf
+qi.conf.sh
+log

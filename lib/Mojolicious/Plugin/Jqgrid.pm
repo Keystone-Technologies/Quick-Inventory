@@ -7,6 +7,8 @@ our $VERSION = '0.01';
 
 use Mojo::Util qw(decamelize);
 
+use Data::Dumper;
+
 sub register {
 	my ($self, $app) = @_;
 
@@ -143,12 +145,10 @@ sub update {
 		warn "Form edit\n" if $ENV{JQGRID_DEBUG};
 		$data = $self->_process_fields($rs, $request->{id} => {%$request});
 	}
-	warn Dumper({update=>$data}) if $ENV{JQGRID_DEBUG};
+	warn Dumper([update=>$request->{id}=>$data]) if $ENV{JQGRID_DEBUG};
 	my $record = $rs->find($request->{id}) or return undef;
 	$record->$_($data->{$_}) for keys %$data;
 	return $record->update;
-
-	return {res=>($record->update?'ok':'err'),msg=>''};
 }
 
 sub delete {

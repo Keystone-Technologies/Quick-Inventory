@@ -1,25 +1,17 @@
-use utf8;
 package QI::Schema::Result::Buyer;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
-=head1 NAME
-
-QI::Schema::Result::Buyer
-
-=cut
-
 use strict;
 use warnings;
 
-=head1 BASE CLASS: L<QI::Schema::Result>
-
-=cut
-
 use base 'QI::Schema::Result';
 
-=head1 TABLE: C<buyers>
+
+=head1 NAME
+
+QI::Schema::Result::Buyer
 
 =cut
 
@@ -47,22 +39,11 @@ __PACKAGE__->add_columns(
   "name",
   { data_type => "varchar", is_nullable => 1, size => 255 },
 );
-
-=head1 PRIMARY KEY
-
-=over 4
-
-=item * L</buyer_id>
-
-=back
-
-=cut
-
 __PACKAGE__->set_primary_key("buyer_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 20:41:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Vz18PGnW5MHD1Gu1Tuohuw
+# Created by DBIx::Class::Schema::Loader v0.07010 @ 2013-03-05 15:18:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:It2xMGskJV41n1cqz47TFQ
 
 __PACKAGE__->has_many(assets => 'QI::Schema::Result::Asset', 'buyer_id');
 

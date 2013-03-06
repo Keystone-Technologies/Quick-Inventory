@@ -1,4 +1,3 @@
-use utf8;
 package QI::Schema;
 
 # Created by DBIx::Class::Schema::Loader
@@ -10,12 +9,12 @@ use warnings;
 use base 'DBIx::Class::Schema';
 
 __PACKAGE__->load_namespaces(
-    default_resultset_class => "ResultSet",
+    default_resultset_class => 'ResultSet',
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 16:39:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JAHCVYL8t3au9RzQEc+qVw
+# Created by DBIx::Class::Schema::Loader v0.07010 @ 2013-03-05 15:18:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:W+MWqsabxtppZq8W1ePLAw
 
 __PACKAGE__->load_components(qw(Helper::Schema::ResultSet Helper::Schema::Mojolicious));
 

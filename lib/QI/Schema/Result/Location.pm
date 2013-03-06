@@ -1,25 +1,17 @@
-use utf8;
 package QI::Schema::Result::Location;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
-=head1 NAME
-
-QI::Schema::Result::Location
-
-=cut
-
 use strict;
 use warnings;
 
-=head1 BASE CLASS: L<QI::Schema::Result>
-
-=cut
-
 use base 'QI::Schema::Result';
 
-=head1 TABLE: C<locations>
+
+=head1 NAME
+
+QI::Schema::Result::Location
 
 =cut
 
@@ -55,22 +47,11 @@ __PACKAGE__->add_columns(
   "label",
   { data_type => "varchar", is_nullable => 1, size => 16 },
 );
-
-=head1 PRIMARY KEY
-
-=over 4
-
-=item * L</location_id>
-
-=back
-
-=cut
-
 __PACKAGE__->set_primary_key("location_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07022 @ 2013-03-04 20:41:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gdeiy0cOvD1nvxxFL4CvuA
+# Created by DBIx::Class::Schema::Loader v0.07010 @ 2013-03-05 15:18:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8PuY5oDjdl8z0ZpDoAfFwQ
 
 __PACKAGE__->has_many(assets => 'QI::Schema::Result::Asset', 'location_id');
 __PACKAGE__->has_many(inventory => 'QI::Schema::Result::Inventory', 'location_id');
